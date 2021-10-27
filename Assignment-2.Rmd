@@ -1,0 +1,153 @@
+---
+title: "Assignment 2"
+author: "Harrison B"
+date: "06/10/2021"
+output: html_document
+---
+
+## Setup
+Load libs and cut down the data we're going to use
+
+```{r Setup}
+library(tidyverse)
+library(Stat2Data)
+data("Hawks")
+hawksSmall<-drop_na(select(Hawks,Age,Day,Month,Year,CaptureTime,Species,Wing,Weight,Tail))
+```
+
+## Visualisation
+Check size of matrix using and display the top 5 rows:
+```{r Dimensions}
+dim(hawksSmall)
+head(hawksSmall)
+```
+
+### Histogram
+Generate a plot using ggplot(). A basic histogram is made via:
+```{r Histogram}
+histo<-ggplot(data=hawksSmall,aes(x=Weight))+xlab("Weight(mg)")
+histo+geom_histogram(binwidth = 100)+ylab("Count")
+```
+
+This plot is bimodal.
+
+### Density plot
+Generate a density plot of tail length:
+```{r Density}
+dense<-ggplot(data=hawksSmall,aes(x=Tail))+xlab("Tail (mm)")
+dense+geom_density(adjust=0.5)+ylab("Density")
+```
+
+In order to split the data by species, we separate out the species data:
+```{r Split density}
+ggplot(data=rename(hawksSmall,Species=Species),aes(x=Tail,colour=Species))+geom_density()+theme_bw()+xlab("Tail (mm)")+ylab("Density")
+```
+
+
+### Violin plot
+Alternatively a violin plot can do a similar thing to a density plot:
+```{r Violin}
+ggplot(data=hawksSmall, aes(x=Tail,y=Species,fill=Species)) + geom_violin() + theme_bw() + xlab("Tail (mm)")
+```
+
+
+### Scatter plot
+In order to separate by species using shape and colour, we require multiple aes arguments:
+```{r Scatter}
+ggplot(data=hawksSmall, aes(x=Tail, y=Weight, shape=Species, color=Species)) + xlab("Tail (mm)") + ylab("Weight (mg)") + geom_point(size=2)
+```
+
+The size of the points can be controlled via the size=2 call inside of geom_point()
+
+### Trend lines and Facet wraps
+To separate the graphs by species we can use facet_wrap to do so.
+In addition to this, using geom_smooth will add a trend line to the graphs:
+```{r Facet and Trend}
+ggplot(data=hawksSmall, aes(x=Tail, y=Weight, color=Species)) + xlab("Tail (mm)") + ylab("Weight (mg)") + geom_point(size=2) + geom_smooth(method="lm") + facet_wrap(~Species)
+```
+The method used within geom_smooth will define the type of line used, "lm" is a straight line of best fit.
+
+## Data Wrangling
+### Select and filter
+To select and filter certain rows and columns:
+```{r Select and Filter}
+hSF <- Hawks %>%
+    filter(Species=="RT") %>%
+    filter(Weight >= 1000) %>%
+    select(Wing,Weight,Tail)
+dim(hSF)
+```
+
+### Arrange function
+Arranging the data by ascending wing size:
+```{r Arrange}
+hSF %>% arrange(Wing)
+```
+
+### Join and Rename function
+If we wish to add the full name of the species to the data, we first need a small array of names first:
+```{r Full name array}
+species<-unique(Hawks$Species)
+full_name <- c("Cooper's", "Red-tailed", "Sharp-shinned")
+full_name_df <- data.frame(species, full_name)
+full_name_df
+```
+
+Re-naming the column names:
+```{r renaming columns}
+full_name_df <- rename(full_name_df, species_code = species, species_name_full = full_name)
+```
+
+In order to join the species full names to the Hawks data, we can use a left_join
+```{r left_join and remove/rename}
+hawksFullName <- Hawks %>% 
+  left_join(full_name_df, by=c("Species" = "species_code")) %>%
+  select(-Species) %>%
+  rename(Species = species_name_full)
+```
+
+The columns don't have he same names and so 'by' gets around this. We want to remove the old Species column and rename our new one to replace it.
+Display the top few rows;
+```{r Print outcome}
+head(select(hawksFullName, Species, Wing, Weight))
+```
+
+### Mutate function
+In order to create a new column based in existing columns, we use mutate.
+bird_BMI = 1000 * Weight / (Wing^2)
+```{r}
+hawksWithBMI <- Hawks %>%
+  mutate(bird_BMI = 1000*Weight/(Wing^2)) %>%
+  select(Species, bird_BMI) %>%
+  arrange(desc(bird_BMI))
+
+head(hawksWithBMI)
+```
+
+We remove some of the outliers than have a BMI of more than 100, then display it using a violin plot and a log scale.
+```{r}
+hawksWithBMI %>%
+    filter(bird_BMI<=100) %>%
+    ggplot(aes(x=bird_BMI, y=Species, fill=Species)) + geom_violin() + theme_bw() + xlab("Bird BMI") + ylab("Species") + scale_x_continuous(trans='log2')
+```
+
+### Summarize and group-by functions
+Summarise the data we have by group using the functions. We want the number of rows, mean wing size, median wing size, trimmed mean wing size and the ratio between tail and wing size.
+```{r}
+hawksFullName %>%
+  group_by(Species) %>%
+  summarize(
+    num_rows = n(), mn_wing = mean(Wing, na.rm=TRUE), md_wing = median(Wing, na.rm=TRUE), t_mn_wing = mean(Wing, trim = 0.1, na.rm=TRUE), tail_wing_ratio = mean(Wing / Tail, na.rm=TRUE)
+  )
+```
+
+To find what's missing, we can use everything, across, sum and is.na
+```{r}
+hawksFullName %>%
+    group_by(Species) %>%
+    summarize(across(everything(), ~sum(is.na(.x)))) %>%
+    select(Species, Wing, Weight, Culmen, Hallux, Tail, StandardTail, Tarsus, Crop)
+```
+
+## Explaratory Data Analysis
+
