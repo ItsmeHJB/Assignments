@@ -146,6 +146,31 @@ head(vary_beta_sample)
 graph <- vary_beta_sample %>%
   ggplot(aes(x=beta_vals, y=sample_avg)) + xlab("Beta")
 graph + geom_line() + ylab("Sample avg")
+```
 
+## 3 - Gaussian distribution
+
+Probability density function of the Gaussian random variable is:
+
+$f\mu,\sigma (x) = \frac{1}{\sigma \sqrt{2\pi}} \cdot exp(-\frac{1}{2}(\frac{x-\mu}{\sigma})^2)$
+
+The normal distribution functions all sit under the norm group:
+
+dnorm, pnorm, qnorm and rnorm
+
+Plotting a gaussian density func is as below:
+
+```{r}
+plot1 <- data.frame(mu = 1, sigma = 1)
+plot2 <- data.frame(mu = 1, sigma = 2)
+plot3 <- data.frame(mu = 1, sigma = 3)
+
+ggplot(data.frame(x = c(-4, 6)), aes(x = x)) + 
+  xlim(c(-4, 6)) + 
+  stat_function(fun = dnorm, args = list(mean = 1, sd = sqrt(1)), aes(colour = "red")) + 
+  stat_function(fun = dnorm, args = list(mean = 1, sd = sqrt(2)), aes(colour = "green")) +
+  stat_function(fun = dnorm, args = list(mean = 1, sd = sqrt(3)), aes(colour = "blue")) +
+  labs(x = "X", y = "Density", 
+       title = "Gaussian or Normal distribution plots")
 ```
 
