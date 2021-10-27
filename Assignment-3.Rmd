@@ -1,0 +1,85 @@
+---
+title: "Assignment 3"
+author: "ItsmeHJB"
+date: "11/10/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+```
+# Part 1
+## Defintions
+Random experiment - A procedure that could be repeated an arbitrary number of times with a well-defined set of outcomes. E.g. flipping a coin
+Event - A set of possible outcomes
+Sample space - The combination of all sets
+
+# Part 2
+## Iterations
+Create functions to iterate over vector using iteration
+```{r}
+impute_by_mean<-function(x){
+  mu<-mean(x,na.rm=1) # first compute the mean of x
+  impute_f<-function(z){ # coordinate-wise imputation
+    if(is.na(z)){
+      return(mu) # if z is na replace with mean
+    }else{
+      return(z) # otherwise leave in place
+    }
+  }
+  return(map_dbl(x,impute_f)) # apply the map function to impute         across vector
+}
+
+impute_by_median<-function(x){
+  mu<-median(x,na.rm=1) # first compute the mean of x
+  impute_f<-function(z){ # coordinate-wise imputation
+    if(is.na(z)){
+      return(mu) # if z is na replace with mean
+    }else{
+      return(z) # otherwise leave in place
+    }
+  }
+  return(map_dbl(x,impute_f)) # apply the map function to impute         across vector
+}
+```
+
+Create 2 vectors, then combine into a data frame
+A sequence of 0 to 10 in 0.1 steps
+Plus a second which uses the values derived from the first
+```{r}
+x <- seq(0, 10, by=0.1)
+
+to_y <- function(x) {
+  return(5*x+1)
+}
+# Test it
+to_y(0.0)
+to_y(0.1)
+
+# Map x to y
+y<-map_dbl(x,to_y)
+
+# Combine
+df_xy <- data.frame(x, y)
+head(df_xy, 5)
+```
+
+Create a function to return missing values when index is multiple of 5
+```{r}
+something_missing <- function(index, value) {
+  if(index%%5 == 0) {return(NA)}
+  else {return(value)}
+}
+```
+Set up df_xy_missing the same as before
+```{r}
+df_xy_missing <- data.frame(x, y)
+```
+Start manipulating y to have missing values when index %% 5 == 0
+```{r}
+
+```
+
+Screw this ^
+#Part 3
+## Elementary set theory
