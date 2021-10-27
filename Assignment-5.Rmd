@@ -6,11 +6,12 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggplot2)
 ```
 
 # Assignment 5
-## Expectation and variance in discrete random variable
+## 1 - Expectation and variance in discrete random variable
 
 Let $\alpha,\beta \in [0,1]$ with $\alpha + \beta \le 1$
 X is supported on {0, 1, 5}
@@ -59,3 +60,92 @@ $\mathbb{E}(X^2) = \alpha + 25\beta$
 $Var(X) = \alpha + 25\beta - (5\beta+\alpha)^2$
 
 $Var(X) = \alpha + 25\beta - (25\beta^2+10\beta\alpha+\alpha^2)$
+
+## 2 - Simulating data with uniform distribution
+
+```{r}
+set.seed(0)
+
+n<-1000
+
+sample_X<-data.frame(U=runif(n)) %>%
+  mutate(X=case_when(
+    (0<=U)&(U<0.25)~1,
+    (0.25<=U)&(U<0.5)~5,
+    (0.5<=U)&(U<=1)~0)) %>%
+  pull(X)
+
+```
+
+Simulating question 1 above, we can use the above code chunk to create i.i.d. variables
+
+In this sample, both $\alpha$ and $\beta$ equal 0.25. If the value for U falls between 0 and 0.25, it is assigned 1, between 0.25 and 0.5, it is assigned 1. And finally if it is between 0.5 and 1, it is assigned 0.
+
+Below is a function which can take alpha, beta and n as variables.
+```{r}
+sample_X_015 <- function(alpha, beta, n) {
+  beta_start <- alpha+beta
+  
+  return(data.frame(u=runif(n)) %>%
+    mutate(x=case_when(
+      (0<=u)&(u<alpha) ~ 1,
+      (alpha<=u)&(u<beta_start) ~ 5,
+      (beta_start<=u)&(u<=1) ~ 0
+    )) %>%
+    pull(x)
+  )
+}
+```
+
+Setting up the probs and running the code
+```{r}
+alpha <- 0.5
+beta <- 0.1
+n <- 10000
+
+# Vector of probs
+PS <- c(1-alpha-beta, alpha, beta)
+
+# Vector of outcomes
+S <- c(0, 1, 5)
+
+# Run the code
+vals <- sample_X_015(alpha, beta, n)
+
+# Expectation
+ES <- sum(S * PS)
+ES
+
+# Average of values
+mean(vals)
+
+# Variance
+var(vals)
+
+```
+
+We find the output of both the expectation and average to be extremely similar here. With the average floating around 1.0
+
+Due to the large number of experiments, the sample slowly drifts closer to the expectation. If we increased n further, it would be closer still.
+
+Varying beta, we get
+```{r}
+beta_vals <- c(seq(0, 0.9, 0.01))
+alpha <- 0.1
+n <- 100
+
+#temp <- data.frame(map(.x=data_x, ~sample_X_015(alpha,.x,n)))
+#temp
+
+vary_beta_sample<-data.frame(beta_vals)%>%
+  mutate(rand_vars=map(.x=beta_vals,~sample_X_015(alpha, .x, n))) %>%
+  mutate(sample_avg = map_dbl(.x=rand_vars,~mean(.x)))
+
+head(vary_beta_sample)
+
+graph <- vary_beta_sample %>%
+  ggplot(aes(x=beta_vals, y=sample_avg)) + xlab("Beta")
+graph + geom_line() + ylab("Sample avg")
+
+```
+
