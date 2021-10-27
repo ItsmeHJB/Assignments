@@ -9,22 +9,53 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+# Assignment 5
+## Expectation and variance in discrete random variable
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+Let $\alpha,\beta \in [0,1]$ with $\alpha + \beta \le 1$
+X is supported on {0, 1, 5}
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+We could also say: $\Omega = \{0, 1, 5\}$
 
-```{r cars}
-summary(cars)
-```
+$\mathbb{P}(X=1)=\alpha$ and $\mathbb{P}(X=5)=\beta$
 
-## Including Plots
+Also,
+$\mathbb{P}(X \notin \{0, 1, 5\}) = 0$
 
-You can also embed plots, for example:
+### Probability mass function
 
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
+Define the prob for each value of $\Omega$
+\begin{equation}
+  \mathbb{P}(X) =
+  \begin{cases}
+    1 - \alpha - \beta & x=0 \\
+    \alpha & x=1 \\
+    \beta & x=5 \\
+    0 & \text{otherwise}
+  \end{cases}
+\end{equation}
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+$px(S) = (1 - \alpha - \beta) + \alpha$
+
+$px(S) = 1 - \beta$
+
+### Expectation
+
+$\mathbb{E}(X) = (0 \cdot 1-\alpha-\beta) + (1 \cdot\alpha) + (5\cdot\beta) $
+
+$\mathbb{E}(X) = \alpha + 5\beta $
+
+### Variance
+
+$Var(X) = \mathbb{E}(X^2) - [\mathbb{E}(X)]^2$
+
+Work out E(X)^2
+$\mathbb{E}(X^2) = (0^2 \cdot 1-\alpha-\beta) + (1^2 \cdot\alpha) + (5^2\cdot\beta) $
+
+$\mathbb{E}(X^2) = 0 + \alpha + 25\beta$
+
+$\mathbb{E}(X^2) = \alpha + 25\beta$
+
+$Var(X) = \alpha + 25\beta - (5\beta+\alpha)^2$
+
+$Var(X) = \alpha + 25\beta - (25\beta^2+10\beta\alpha+\alpha^2)$
