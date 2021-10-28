@@ -7,7 +7,6 @@ output: html_document
 
 ```{r setup, include=FALSE}
 library(tidyverse)
-library(ggplot2)
 ```
 
 # Assignment 5
@@ -128,7 +127,7 @@ We find the output of both the expectation and average to be extremely similar h
 
 Due to the large number of experiments, the sample slowly drifts closer to the expectation. If we increased n further, it would be closer still.
 
-Varying beta, we get
+As we increase the value of beta, we find that the number of 5's increases and so the sample average tend upwards towards .
 ```{r}
 beta_vals <- c(seq(0, 0.9, 0.01))
 alpha <- 0.1
@@ -156,21 +155,107 @@ $f\mu,\sigma (x) = \frac{1}{\sigma \sqrt{2\pi}} \cdot exp(-\frac{1}{2}(\frac{x-\
 
 The normal distribution functions all sit under the norm group:
 
-dnorm, pnorm, qnorm and rnorm
+ - dnorm - Probability Density func (Normal density)
+ - pnorm - Cumulative Distribution func (Normal distribution)
+ - qnorm - Quantile function of norm dist
+ - rnorm - Normal random number generation
 
-Plotting a gaussian density func is as below:
+Plotting a Gaussian density func is as below:
 
-```{r}
-plot1 <- data.frame(mu = 1, sigma = 1)
-plot2 <- data.frame(mu = 1, sigma = 2)
-plot3 <- data.frame(mu = 1, sigma = 3)
+```{r dnorm}
+#ggplot(data=rename(hawksSmall,Species=Species),aes(x=Tail,colour=Species))+geom_density()+theme_bw()+xlab("Tail (mm)")+ylab("Density")
 
+# Plot using ggplot
+# Use stat_function to plot dnorm between range
 ggplot(data.frame(x = c(-4, 6)), aes(x = x)) + 
   xlim(c(-4, 6)) + 
-  stat_function(fun = dnorm, args = list(mean = 1, sd = sqrt(1)), aes(colour = "red")) + 
-  stat_function(fun = dnorm, args = list(mean = 1, sd = sqrt(2)), aes(colour = "green")) +
-  stat_function(fun = dnorm, args = list(mean = 1, sd = sqrt(3)), aes(colour = "blue")) +
-  labs(x = "X", y = "Density", 
-       title = "Gaussian or Normal distribution plots")
+  stat_function(fun = dnorm, args = list(mean = 1, sd = sqrt(1)), aes(colour = "1")) + 
+  stat_function(fun = dnorm, args = list(mean = 1, sd = sqrt(2)), aes(colour = "2")) +
+  stat_function(fun = dnorm, args = list(mean = 1, sd = sqrt(3)), aes(colour = "3")) +
+  labs(x = "X", y = "f(X)", 
+       title = "Normal distribution function")
+```
+
+Plotting the cumulative distribution func:
+
+```{r pnorm}
+# Plot using ggplot
+# Use stat_function to plot pnorm between range
+ggplot(data.frame(x = c(-4, 6)), aes(x = x)) + 
+  xlim(c(-4, 6)) + 
+  stat_function(fun = pnorm, args = list(mean = 1, sd = sqrt(1)), aes(colour = "1")) + 
+  stat_function(fun = pnorm, args = list(mean = 1, sd = sqrt(2)), aes(colour = "2")) +
+  stat_function(fun = pnorm, args = list(mean = 1, sd = sqrt(3)), aes(colour = "3")) +
+  labs(x = "X", y = "P(X < x)", 
+       title = "Normal cumulative distribution function")
+```
+
+Plotting the normal quantile function
+
+```{r}
+# Plot using ggplot
+# Use stat_function to plot qnorm between range
+ggplot(data.frame(x = c(0, 1)), aes(x = x)) + 
+  xlim(c(0, 1)) + 
+  stat_function(fun = qnorm, args = list(mean = 1, sd = sqrt(1)), aes(colour = "1")) + 
+  stat_function(fun = qnorm, args = list(mean = 1, sd = sqrt(2)), aes(colour = "2")) +
+  stat_function(fun = qnorm, args = list(mean = 1, sd = sqrt(3)), aes(colour = "3")) +
+  labs(x = "p", y = "Q(p)", 
+       title = "Normal quantile function")
+```
+
+
+## Q4 - Binomial distribution and the central limit theorem
+
+We can build a compute the probability mass function using dbinom as shown below. The value of x varies between 0 and 50, whilst the size, n, and the probability, p, remain the same at 50 and 7/10 respectfully.
+```{r}
+n <- 50
+p <- 7/10
+
+binom_df <- data.frame(x=0:50) %>%
+  mutate(pmf=map_dbl(.x=x,~dbinom(.x, size=n, prob=p)))
+
+head(binom_df, 3)
+```
+
+The same can be done for normal distributions using dnorm to produce a probability density function value.
+```{r}
+mu <- 50 * 0.7
+sigma <- sqrt(50 * 0.7 * (1 - 0.7))
+
+norm_df = data.frame(x=seq(0, 50, 0.01)) %>%
+  mutate(pdf=dnorm(x, mean = mu, sd = sigma))
+
+head(norm_df, 3)
+```
+
+
+Compare binomial probability mass function and gaussian probability density function
+```{r}
+gaussian_df <- norm_df
+
+colors<-c("Gaussian pdf"="red", "Binomial pmf"="blue")
+fill<-c("Gaussian pdf"="white", "Binomial pmf"="white")
+
+ggplot()+labs(x="x",y="Probability")+theme_bw()+
+  geom_line(data=gaussian_df,
+  aes(x,y=pdf,color="Gaussian pdf"),size=2)+
+  # create plot of Gaussian density
+  geom_col(data=binom_df,
+                  aes(x=x,y=pmf,color="Binomial pmf",fill="Binomial pmf"))+
+  scale_color_manual(name = "", values=colors)+
+  scale_fill_manual(name = "", values=fill)+
+  xlim(c(20,50))
+
+```
+
+# Q5 - Exponential distribution
+
+```{r}
+my_cdf_exp <- function(x, lambda) {
+  # Assume inputs are sanity checked
+  
+  #?
+}
 ```
 
