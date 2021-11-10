@@ -1,0 +1,158 @@
+---
+title: "Assignment-6"
+author: "ItsmeHJB"
+date: "10/11/2021"
+output: html_document
+---
+
+# Assignment 6
+
+## Gaussian Model for Red tailed hawks
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(Stat2Data)
+data("Hawks")
+```
+
+Extract all red-tailed hawks, filter out Weight, Tail and Wing
+
+```{r}
+RedTailedDf <- Hawks %>%
+  filter(Species=="RT") %>%
+  select(Weight, Tail, Wing)
+```
+
+Calculating the mean and variance using both the formula and in-built functions produce the same answer
+
+```{r}
+mean_mu = mean(RedTailedDf$Tail)
+mu = sum(RedTailedDf$Tail) / length(RedTailedDf$Tail)
+
+var_sigma_sqrd = var(RedTailedDf$Tail)
+sigma_sqrd = sum(RedTailedDf$Tail - mean_mu) ** 2 / length(RedTailedDf$Tail)
+
+```
+
+Simulating the MLE function vs the actual values:
+```{r}
+sigma <- sqrt(sigma_sqrd)  # Get standard deviation
+x <- seq(mu-3*sigma, mu+3*sigma, sigma*0.01) # Generate x plots, define bounds based on 3x standard dev, and the step as 0.01 of sd
+df_gaussian <- data.frame(x, Density = dnorm(x, mean=mu, sd=sigma), Source="Population") # data frame using pop density
+
+set.seed(1) # reproducible seed
+sample_size <- 100 # n
+sample_data <- rnorm(sample_size, mu, sigma) # Generate data
+
+# get mle mean and sigma
+mu_mle <- mean(sample_data)
+sigma_mle <- sd(sample_data)*sqrt((sample_size-1) / sample_size)
+
+df_gaussian <- df_gaussian %>%
+  rbind(data.frame(x, Density=dnorm(x, mean=mu_mle, sd=sigma_mle), Source = "MLE estimate"))  # add in mle density
+
+# Plot it
+df_gaussian %>% ggplot(aes(x=x, y=Density, color=Source)) + 
+  geom_line() + 
+  ylab("Density function") +
+  theme_bw()
+```
+
+Doing the same again using a parametric model
+```{r}
+RT_tails <- RedTailedDf %>% pull(Tail)
+
+n <- length(RT_tails)
+mu_mle_tails <- mean(RT_tails, na.rm=1)
+sigma_mle_tails <- sd(RT_tails)*sqrt((n-1) / n)
+
+tails <- seq(mu_mle_tails-3*sigma_mle_tails, mu_mle_tails+3*sigma_mle_tails, sigma_mle_tails*0.001) # generate indecies
+
+colors <- c("MLE density" = "red", "Kernel density" = "blue") # line colours
+ggplot() + geom_line(data = data.frame(Tail=tails, Density=dnorm(tails, mean=mu_mle_tails, sd = sigma_mle_tails)), 
+  aes(x=Tail, y=Density, color="MLE density")) + 
+  geom_density(data=tibble(RT_tails), aes(x=RT_tails, color="Kernel_density")) + 
+  labs(y = "Density function", color = "Estimator") + theme_bw() + 
+  scale_color_manual(values=colors)
+```
+
+## Location estimators with Gaussian data
+
+The population median of a gaussuan random variable is simply the mean
+
+Estimate the mean squared error of the sample median as an estimator of mu
+
+```{r}
+# Setup
+set.seed(0)
+num_trials_per_sample_size<-100
+min_sample_size<-5
+max_sample_size<-1000
+sample_size_inc<-5
+mu_0<-1
+sigma_0<-3
+
+# Doing the mean square error of the sample median
+simulation_df<-crossing(trial=seq(num_trials_per_sample_size),
+                        sample_size=seq(min_sample_size,
+                                       max_sample_size,sample_size_inc))%>%
+  # create data frame of all pairs of sample_size and trial
+  mutate(simulation=pmap(.l=list(trial,sample_size),
+                          .f=~rnorm(.y,mean=mu_0,sd=sigma_0)))%>%
+  # simulate sequences of Gaussian random variables
+  mutate(sample_md=map_dbl(.x=simulation,.f=median))%>%
+  # compute the sample medians
+  group_by(sample_size)%>%
+    summarise(msq_error_md=mean((sample_md-mu_0)**2))
+
+
+mean_simulation_df<-crossing(trial=seq(num_trials_per_sample_size),
+                        sample_size=seq(min_sample_size,
+                                        max_sample_size,sample_size_inc))%>%
+  # create data frame of all pairs of sample_size and trial
+  mutate(simulation=pmap(.l=list(trial,sample_size),
+                          .f=~rnorm(.y,mean=mu_0,sd=sigma_0)))%>%
+  # simulate sequences of Gaussian random variables
+  mutate(sample_mean=map_dbl(.x=simulation,.f=mean))%>%
+  # compute the sample medians
+  group_by(sample_size)%>%
+    summarise(msq_error_mean=mean((sample_mean-mu_0)**2))
+
+# Combine data frames
+simulation_df$msq_error_mean <- mean_simulation_df$msq_error_mean
+
+colours <- c("Mean" = "red", "Median" = "blue") # line colours
+ggplot() + geom_line(data = simulation_df, 
+  aes(x=sample_size, y=msq_error_md, color="Median")) + 
+  geom_line(data=simulation_df, aes(x=sample_size, y=msq_error_mean, color="Mean")) + 
+  labs(y = "Mean square error", x = "Sample size", color = "Estimator") + 
+  theme_bw() +scale_color_manual(values=colours) + 
+  xlim(0, 500) + ylim(0, 0.35)
+```
+
+## Unbiased estimation of population variance
+
+```{r}
+VMLE <- function(X) {
+  
+  x_bar <- mean(x)
+  return(sum(x-x_bar)**2 / length(x))
+}
+
+VU <- function(X) {
+  x_bar <- mean(x)
+  return(sum(x-x_bar)**2 / (length(x)-1))
+}
+
+mu <- seq(1, 10)
+sigma <- seq(1, 10)
+sample_size = 1000
+
+comp <- crossing(mu, sigma) %>%
+  mutate(sample=map2(.x=mu, .y=sigma, ~rnorm(sample_size, mean=.x, sd=.y))) %>%
+  mutate(v1=map_dbl(.x=sample, ~VMLE(.x))) %>%
+  mutate(v2=map_dbl(.x=sample, ~VU(.x)))
+  
+comp
+```
+
