@@ -1,0 +1,159 @@
+---
+title: "Assignment-7"
+author: "ItsmeHJB"
+date: "18/11/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(palmerpenguins)
+
+data(package = 'palmerpenguins')
+```
+
+# Assignment 7
+
+## Student's t-confidence intervals
+
+Compute confidence intervals of flippers using pop mean of flipper length utilising Student's t-distribution. This requires some data setup using palmerpenguins.
+
+```{r data creation}
+# Select adelie penguin's flipper length
+adelie_flippers <- penguins %>%
+  filter(species=="Adelie") %>%
+  select(flipper_length_mm)
+
+# Convert data frame to vector
+adelie_flippers <- adelie_flippers$flipper_length_mm
+# Remove na data
+adelie_flippers <- adelie_flippers[!is.na(adelie_flippers)]
+```
+
+
+```{r t-confidence intervals}
+# Setup alpha and other required vars
+alpha<-0.05
+sample_size<-length(adelie_flippers)
+sample_mean<-mean(adelie_flippers)
+sample_sd<-sd(adelie_flippers)
+
+# Calc t value and conf interval
+t<-qt(1-alpha/2,df=sample_size-1)
+confidence_interval_l<-sample_mean-t*sample_sd/sqrt(sample_size)
+confidence_interval_u<-sample_mean+t*sample_sd/sqrt(sample_size)
+confidence_interval<-c(confidence_interval_l,confidence_interval_u)
+confidence_interval
+```
+
+Doing the same again with the hawks dataset, specifically the red-tailed hawks and a 99% confidence level.
+```{r hawks t-test}
+library(Stat2Data)
+data("Hawks")
+
+# Select red-tailed hawks weights
+rt_weight <- Hawks %>%
+  filter(Species=="RT") %>%
+  select(Weight)
+
+# Convert data frame to vector
+rt_weight <- rt_weight$Weight
+# Remove na data
+rt_weight <- rt_weight[!is.na(rt_weight)]
+
+# Setup alpha and other required vars
+# 99%-level confidence intervals
+alpha<-0.01
+sample_size<-length(rt_weight)
+sample_mean<-mean(rt_weight)
+sample_sd<-sd(rt_weight)
+
+# Calc t value and conf interval
+t<-qt(1-alpha/2,df=sample_size-1)
+confidence_interval_l<-sample_mean-t*sample_sd/sqrt(sample_size)
+confidence_interval_u<-sample_mean+t*sample_sd/sqrt(sample_size)
+rt_confidence_interval<-c(confidence_interval_l,confidence_interval_u)
+rt_confidence_interval
+```
+
+This is all assuming the data is Gaussian by nature.
+
+## One sample t-test
+
+Load bill length of adelie penguins. Carry out one sample t-test on data using t.test function.
+
+```{r t-test}
+# Select adelie penguin's bill length
+adelie_bills <- penguins %>%
+  filter(species=="Adelie") %>%
+  select(bill_length_mm)
+
+# Convert data frame to vector
+adelie_bills <- adelie_bills$bill_length_mm
+# Remove na data
+adelie_bills <- adelie_bills[!is.na(adelie_bills)]
+
+t.test(x=adelie_bills, mu=40, conf.level = 0.99)
+```
+
+As the mean falls outside of the 99% confidence interval, we reject the null hypothesis that mu = 40, and accept the alternative.
+
+We are assuming the data follows a Gaussian distribution
+
+## Implementing one-sample t-test
+
+The function takes an input of x, a Gaussian distribution of random variables in the shape of a vector, and a mean, mu, of the null hypothesis. It returns the p-value of the test, which can be compared against the t.test function's p-value.
+
+```{r}
+# Pass in vector x and value, mu0, corresponding to the value of the null hypothesis
+t_test <- function(x, mu0) {
+  alpha = 0.05
+  sample_size <- length(x)
+  sample_mean <- mean(x, na.rm = TRUE)
+  sample_sd <- sd(x, na.rm = TRUE)
+  
+  test_stat <- (sample_mean-mu0) / (sample_sd/sqrt(sample_size))
+  
+  p_value = 2 * (1 - pt(abs(test_stat), df = sample_size - 1))
+  
+  return(p_value)
+}
+
+t_test(adelie_bills, 40)
+t.test(x=adelie_bills, mu=40)
+```
+
+## Paired test
+
+Compare the two barley yields in two fields. t.test is used on the data to see that there is a significant difference between the two variables.
+
+```{r data loading}
+library(PairedData)
+data("Barley")
+```
+
+```{r}
+alpha <- 0.01
+diffs <- Barley %>%
+  mutate(diff = Velvet - Glabron) %>%
+  dplyr::select(diff)
+diffs <- diffs$diff
+
+t.test(x=Barley$Glabron, y=Barley$Velvet, paired=TRUE, conf.level = 1-alpha)
+```
+
+Afterwards, we work out the cohen's d statistic
+
+```{r}
+y_bar <- mean(diffs)
+s <- sd(diffs)
+effect_size <- abs(y_bar / s)
+effect_size
+```
+
+As the effect_size is large, we can say they are significantly different.
+
+We have assumed that the sample follows the Gaussian distribution.
+
+
+

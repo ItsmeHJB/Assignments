@@ -31,6 +31,7 @@ r = 3, n-r = 7
 k = 35
 what is the prob that z of these balls are red
 omega = {1, ..., 10}^35
+
 P(z red balls) = $\binom{35}{z} (\frac{3}{10})^{z} * (1-\frac{3}{10})^{35-z}$
 
 ```{r ball_func}
