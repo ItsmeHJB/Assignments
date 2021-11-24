@@ -11,4 +11,18 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Obstacles to valid scientific inference
 
+1. Measurement distortions
+ - Measurement which off by a margin in relation to their actual values. This is commonly found in human measurements.
+ - An example of this is within a set of manual scales. The head positioning can have a large effect on the read value.
+ 
+2. Selection bias
+ - When data in the analysis misrepresents the underlying population. This can manifest itself in a variety of ways: Sample, Self-selection, Attrition or Post-hoc bias.
+ - An example of this is within restaurant reviewers. Those that complete reviews must decide that they wish to complete reviews.
 
+3. Confounding variables
+ - When trying to find the link between two variables, it is common to find an underlying cause which may be causing the correlation to occur.
+ - Comparing ice-cream and sunglasses sales on a day. They correlate together, but the confounding varaiable is the weather of the day instead.
+ 
+ ## Unpaired t-test
+ 
+ 
