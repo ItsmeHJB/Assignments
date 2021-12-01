@@ -1,0 +1,40 @@
+---
+title: "Assignment-9"
+author: "ItsmeHJB"
+date: "01/12/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(Stat2Data)
+```
+
+## Basic concepts in classification
+
+1. Classification rule - A rule which is able to map a feature vector to categorical values.
+
+2. Learning algorithm - An algorithm which machines can use to learn to classify data.
+
+3. Training data - Data used to train a model.
+
+4. Feature vector - Vector containing feature x1 to xn.
+
+5. Label - Each set of features is assigned one label.
+
+6. Test error - The number of incorrect labels created by the model in comparison to the actual labels in the test data.
+
+7. Train error - The number of incorrect labels created by the modes in comparison to the actual labels in the training data.
+
+8. Train test split - Splitting the original data set into a training and test set.
+
+9. Linear classifier - Cuts the feature space into two with a linear hyper-plane.
+
+## Train test split
+
+Get data frame containing weight, wing, hallux, tail and species. This should only include sharp-shinned or cooper's species.
+
+```{r}
+data("Hawks")
+```
+
+
