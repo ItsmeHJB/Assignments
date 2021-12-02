@@ -7,6 +7,9 @@ output: html_document
 
 ```{r setup, include=FALSE}
 library(Stat2Data)
+library(tidyverse)
+
+data("Hawks")
 ```
 
 ## Basic concepts in classification
@@ -34,7 +37,49 @@ library(Stat2Data)
 Get data frame containing weight, wing, hallux, tail and species. This should only include sharp-shinned or cooper's species.
 
 ```{r}
-data("Hawks")
+# Data pre-processing
+hawks_total <- Hawks %>%
+  select(Weight, Wing, Hallux, Tail, Species) %>% 
+  filter(Species != "RT") %>% 
+  drop_na() %>% 
+  mutate(Species=as.numeric(Species=="SS"))
+
+# 60% training data
+num_total <- nrow(hawks_total)
+num_train <- floor(num_total * 0.60)
+num_test <- num_total - num_train
+
+set.seed(1)
+test_indi <- sample(seq(num_total), num_test)
+train_indi <- setdiff(seq(num_total), test_indi)
+
+# get train and test data
+train_hawks <- hawks_total %>% 
+  filter(row_number() %in% train_indi)
+
+test_hawks <- hawks_total %>% 
+  filter(row_number() %in% test_indi)
+
+# Extract features and labels column
+train_x <- train_hawks %>% select(!Species)
+train_y <- train_hawks %>% pull(Species)
+
+test_x <- test_hawks %>% select(!Species)
+test_y <- test_hawks %>% pull(Species)
+
+# Get most common label from training data
+y <- round(sum(train_y) / num_train)
+
+train_error <- mean(abs(y - train_y))
+train_error
+test_error <- mean(abs(y - test_y))
+test_error
 ```
+
+Using a dumb classifier which simply selects the most common label found in the training data, we get an test error of around 20% for the test data, and 22% for the training data. As a baseline this is interesting as it should be impossible to get worse than this using statistical methods.
+
+From this, we can say that the data sets are relatively different sizes. Data set of type y=1, which is the Sharp-Shinned species, make up about 80% of the total data set.
+
+## Linear discriminant analysis
 
 
