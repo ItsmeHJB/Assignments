@@ -40,7 +40,7 @@ Get data frame containing weight, wing, hallux, tail and species. This should on
 ```{r}
 # Data pre-processing
 hawks_total <- Hawks %>%
-  select(Weight, Wing, Hallux, Tail, Species) %>% 
+  dplyr::select(Weight, Wing, Hallux, Tail, Species) %>% 
   filter(Species != "RT") %>% 
   drop_na() %>% 
   mutate(Species=as.numeric(Species=="SS"))
@@ -62,10 +62,10 @@ test_hawks <- hawks_total %>%
   filter(row_number() %in% test_indi)
 
 # Extract features and labels column
-train_x <- train_hawks %>% select(!Species)
+train_x <- train_hawks %>% dplyr::select(!Species)
 train_y <- train_hawks %>% pull(Species)
 
-test_x <- test_hawks %>% select(!Species)
+test_x <- test_hawks %>% dplyr::select(!Species)
 test_y <- test_hawks %>% pull(Species)
 
 # Get most common label from training data
@@ -118,4 +118,56 @@ This process in underpinned by two ideas.
 2. Use the sigmoid function: $S : R \rightarrow (0,1)$ to map real numbers to probabilities.
 
 This essentially predicts the chance of an outcome given individual characteristics.
+
+Below the sigmoid function is plotted:
+$S(z)=1/(1+e^{-z})$
+
+```{r}
+sigmoid <- function(z) {
+  return(1 / (1 + exp(-z)))
+}
+
+lower <- -10
+upper <- 10
+
+sigmoid_data <- data.frame(z = seq(lower, upper, 0.01)) %>% 
+  mutate(sig = map_dbl(.x=z, .f=sigmoid))
+
+ggplot() + geom_line(data = sigmoid_data,
+                     aes(x = z, y = sig)) + 
+  labs(y = "S(z)", x = "z") + 
+  theme_bw() + 
+  xlim(-10, 10) + ylim(0, 1)
+```
+
+The logistic regression is done through the glmnet model:
+
+```{r, include = FALSE}
+library(glmnet)
+```
+```{r}
+logistic_model <- glmnet(x = train_x %>% as.matrix(),
+                         y = train_y,
+                         family = "binomial",
+                         alpha = 0,
+                         lambda = 0)
+
+# Get vector of predictions using training data
+train_predictions <- predict(logistic_model, train_x %>% 
+  as.matrix(), type = "class") %>% as.integer()
+
+train_error <- mean(abs(train_predictions - train_y))
+train_error
+
+# Get vector of predictions using test data
+test_predictions <- predict(logistic_model, test_x %>% 
+  as.matrix(), type = "class") %>% as.integer()
+
+test_error <- mean(abs(test_predictions - test_y))
+test_error
+```
+
+The family is set to binomial as we are doing a binomial search. Either 1 or 0.
+
+From this algorithm, we find an approximately 3% error on both the training and test data.
 
