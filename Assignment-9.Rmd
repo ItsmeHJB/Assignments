@@ -8,6 +8,7 @@ output: html_document
 ```{r setup, include=FALSE}
 library(Stat2Data)
 library(tidyverse)
+library(MASS)
 
 data("Hawks")
 ```
@@ -82,4 +83,39 @@ From this, we can say that the data sets are relatively different sizes. Data se
 
 ## Linear discriminant analysis
 
+Linear discriminant analysis is a method which assumes each class of data belongs to a select distribution of data, typically Gaussian. The model will then use conditional probability to select whether the data belongs to each class, with the highest probability class being selected.
+
+This method is considered an application of Bayes Theorem for classification. Using this method to minimise the test error over all possible classifiers.
+
+Below is an example of an LDA trying to predict whether a row of data belongs to a Sharp-shinned or Cooper's species of hawk based off their 4d feature vector.
+
+```{r}
+lda_model <- lda(Species ~ ., data = train_hawks)
+
+# Get vector of predictions using training data
+lda_train_predictions <- predict(lda_model, train_x)$class %>% 
+  as.character() %>% as.numeric()
+
+lda_train_error <- mean(abs(lda_train_predictions - train_y))
+lda_train_error
+
+# Get vector of predictions using test data
+lda_test_predictions <- predict(lda_model, test_x)$class %>% 
+  as.character() %>% as.numeric()
+
+lda_test_error <- mean(abs(lda_test_predictions - test_y))
+lda_test_error
+```
+
+Using this model, we can see that our predictions of the training data falls close to 4.6% error, whilst the test data is closer to 1.5%. Both of these are obviously much better than just crudly picking 1 every time as before.
+
+## Logistic Regerssion
+
+This method of learning is used to understand the relationship between a dependent variable and one or more independent variable by estimating the probabilities using a regressive approach.
+
+This process in underpinned by two ideas.  
+1. We only want to model $P(Y=y | X=x)$  
+2. Use the sigmoid function: $S : R \rightarrow (0,1)$ to map real numbers to probabilities.
+
+This essentially predicts the chance of an outcome given individual characteristics.
 
